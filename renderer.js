@@ -1,14 +1,15 @@
 window.addEventListener('DOMContentLoaded', async () => {
   const textarea = document.getElementById('note');
   const saveBtn = document.getElementById('save');
-  const statusEL = document.getElementById('save_+status');
+  const statusEL = document.getElementById('status');
+  const saveAsBtn = document.getElementById('save-as');
 
   // Load existing note
   const savedNote = await window.electronAPI.loadNote();
   textarea.value = savedNote;
 
   let lastSavedText = textarea.value;
-
+     //save button 
   saveBtn.addEventListener('click', async () => {
     try {
       await window.electronAPI.saveNote(textarea.value);
@@ -18,6 +19,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       console.error('Manual save failed:', err);
       if (statusEL) statusEL.textContent = 'Save failed – check console';
+    }
+  });
+  //save as button
+  saveAsBtn.addEventListener('click', async () => {
+    const result = await window.electronAPI.saveAs(textarea.value);
+    if (result.success) {
+      lastSavedText = textarea.value;
+      statusEL.textContent = `Saved to:${result.filePath}`;
+    } else {
+      statusEL.textContent = 'Save  as cancelled';
     }
   });
 
@@ -44,4 +55,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(autosave, 5);
   });
+
 });
+
+

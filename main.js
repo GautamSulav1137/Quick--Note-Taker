@@ -1,10 +1,10 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 app.disableHardwareAcceleration();
 const path = require('node:path');
 const fs = require('node:fs');
 
 function createWindow() {
-  const  win  = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 900,
     height: 600,
     webPreferences: {
@@ -14,7 +14,7 @@ function createWindow() {
     }
   });
 
-   win.loadFile('index.html');
+  win.loadFile('index.html');
 }
 
 app.whenReady().then(() => {
@@ -39,6 +39,20 @@ ipcMain.handle('load-note', async () => {
   const filePath = path.join(app.getPath('documents'), 'quicknote.txt');
   if (fs.existsSync(filePath)) {
     const content = fs.readFileSync(filePath, 'utf-8');
+    return content;
   }
   return '';
 });
+
+ipcMain.handle('save-as', async (event, text) => {
+  const result = await dialog.showSaveDialog({
+    defaultPath: 'mynote.txt',
+    filters: [{ name: 'Text Files', extensions: ['txt'] }],
+  });
+  if (result.canceled) {
+    return { success: false };
+  }
+  fs.writeFileSync(result.filePath, text, 'utf-8');
+  return { success: true, filePath: result.filePath };
+});
+
