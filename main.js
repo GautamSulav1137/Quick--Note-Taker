@@ -43,7 +43,7 @@ ipcMain.handle('load-note', async () => {
   }
   return '';
 });
-
+//save-as handler
 ipcMain.handle('save-as', async (event, text) => {
   const result = await dialog.showSaveDialog({
     defaultPath: 'mynote.txt',
@@ -54,5 +54,30 @@ ipcMain.handle('save-as', async (event, text) => {
   }
   fs.writeFileSync(result.filePath, text, 'utf-8');
   return { success: true, filePath: result.filePath };
+});
+//new-note handler
+ipcMain.handle('new-note', async (event) => {
+  const result = await dialog.showMessageBox({
+    type: 'warning',
+    buttons: ['Discard changes', 'Cancel'],
+    defaultId: 1,
+    title: 'unsaved changes',
+    message: 'You have unsaved changes.Start a new note anyway?'
+  });
+  return { confirmed: result.response === 0 };
+});
+//open-file handler
+ipcMain.handle('open-file', async (event) => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [{ name: 'Text Files', extensions: ['txt'] }],
+  });
+  if (result.canceled) {
+    return { success: false };
+  }
+
+  const filePath = result.filePaths[0];
+  const content = fs.readFileSync(filePath, 'utf-8');
+  return { success: true, content, filePath };
 });
 

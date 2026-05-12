@@ -3,13 +3,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   const saveBtn = document.getElementById('save');
   const statusEL = document.getElementById('status');
   const saveAsBtn = document.getElementById('save-as');
+  const newNoteBtn = document.getElementById('new-note');
+  const openFileBtn = document.getElementById('open-file');
 
   // Load existing note
   const savedNote = await window.electronAPI.loadNote();
   textarea.value = savedNote;
 
   let lastSavedText = textarea.value;
-     //save button 
+  //save button 
   saveBtn.addEventListener('click', async () => {
     try {
       await window.electronAPI.saveNote(textarea.value);
@@ -29,6 +31,36 @@ window.addEventListener('DOMContentLoaded', async () => {
       statusEL.textContent = `Saved to:${result.filePath}`;
     } else {
       statusEL.textContent = 'Save  as cancelled';
+    }
+  });
+  //new note button
+  newNoteBtn.addEventListener('click', async () => {
+    // If there are no unsaved changes, just clear the note
+    if (textarea.value === lastSavedText) {
+      textarea.value = '';
+      lastSavedText = '';
+      statusEL.textContent = 'New note started.';
+      return;
+    }
+    const result = await window.electronAPI.newNote();
+    if (result.confirmed) {
+       textarea.value = '';
+       lastSavedText = '';
+       statusEL.textContent = 'New note started.';
+    } else {
+      statusEL.textContent = 'New note cancelled.';
+    }
+  });
+
+  //open file button
+  openFileBtn.addEventListener('click', async () => {
+    const result = await window.electronAPI.openFile();
+    if (result.success) {
+      textarea.value = result.content;
+      lastSavedText = result.content;
+      statusEL.textContent = `Opened file: ${result.filePath}`;
+    } else {
+      statusEL.textContent = 'Failed to open file';
     }
   });
 
@@ -53,7 +85,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   textarea.addEventListener('input', () => {
     if (statusEL) statusEL.textContent = 'Changes detected – auto-save in 5s...';
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(autosave, 5);
+    debounceTimer = setTimeout(autosave, 5000);
   });
 
 });
